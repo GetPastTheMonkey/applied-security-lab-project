@@ -1,7 +1,7 @@
 <?php
 // Version control
-$CONFIG["VERSION"] = "0.1.0";
-$CONFIG["TIMESTAMP"] = "2018-10-24T14:00";
+$CONFIG["VERSION"] = "0.2.0";
+$CONFIG["TIMESTAMP"] = "2018-11-07T16:45";
 
 // Page configuration
 $CONFIG["PAGE_TITLE"] = "iMovie CA";

@@ -5,15 +5,13 @@ function content_to_html($content, $title) {
 	global $userid;
 	global $mysqli;
 	if(!empty($userid)) {
-		$res = $mysqli->query("SELECT firstname, lastname  FROM users WHERE uid LIKE '{$userid}' LIMIT 1");
-		$data = $res->fetch_assoc();
 		$sidebar = '
 		<div id="small-profile">
-			Logged in as <strong>'.$data["firstname"].' '.$data["lastname"].'</strong>
+			Logged in as <strong>'.$userid.'</strong>
 		</div>
 		<ul class="linkList">
-			<li><a href="list_certs"><span class="fa fa-fw fa-list"></span> List My Certificates</a></li>
-			<li><a href="create_cert"><span class="fa fa-fw fa-plus"></span> Create New Certificate</a></li>
+			<li><a href="list_certs.php"><span class="fa fa-fw fa-list"></span> List My Certificates</a></li>
+			<li><a href="new_cert.php"><span class="fa fa-fw fa-plus"></span> Create New Certificate</a></li>
 			<li><a href="logout.php"><span class="fa fa-fw fa-sign-out"></span> Logout</a></li>
 		</ul>';
 	} else {
@@ -50,6 +48,7 @@ function content_to_html($content, $title) {
 			<div id="sidebar-container">
 				<a href="javascript:void(0)" class="closebtn" onclick="closeSidePanel()">&times;</a>
 				<h2 onclick="location=\'./\';" style="cursor:pointer;">'.$CONFIG["PAGE_TITLE"].'</h2>
+				<p class="text-center"><span class="fa fa-fw fa-film" style="font-size: 75px;"></span></p>
 				'.$sidebar.'
 			</div>
 			<div id="main">
@@ -77,6 +76,14 @@ function content_to_html($content, $title) {
 	return $html;
 }
 
+function require_login() {
+	global $userid;
+	if(empty($userid)) {
+		header("Location: login.php");
+		die();
+	}
+}
+
 function authenticate(){
 	if(!array_key_exists("token", $_COOKIE))
 		return "";
@@ -90,6 +97,45 @@ function authenticate(){
 		return "";
 	}
 	return $result->fetch_assoc()["uid"];
+}
+
+function authenticate_certificate() {
+	global $mysqli;
+
+	// Check if the user submitted a client certificate
+	if(!isset($_SERVER["SSL_CLIENT_VERIFY"])) {
+		return "";
+	}
+
+	// Check if the given client certificate is valid
+	if($_SERVER["SSL_CLIENT_VERIFY"] != "SUCCESS") {
+		return "";
+	}
+
+	// Check if the serial number is numeric
+	if(!is_numeric($_SERVER["SSL_CLIENT_M_SERIAL"])) {
+		error_500("Client certificate does not have a numerical value as serial number");
+	}
+
+	$serial = $mysqli->real_escape_string(round($_SERVER["SSL_CLIENT_M_SERIAL"]));
+
+	// Load certificate data
+	$res = $mysqli->query("SELECT user, revoked FROM certificates WHERE serial_nr='{$serial}' LIMIT 1");
+
+	// Check if certificate exists
+	if($res->num_rows != 1) {
+		return "";
+	}
+
+	$cert = $res->fetch_assoc();
+
+	// Check if the certificate has been revoked
+	if(!is_null($cert["revoked"])) {
+		return "";
+	}
+
+	// At this point, the user has a valid certificate
+	return $cert["user"];
 }
 
 function generate_token($length, $charset=NULL){
