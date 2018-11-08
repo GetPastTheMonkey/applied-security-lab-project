@@ -58,7 +58,7 @@ try {
 		// Set Content-Type, Content-Transfer-Encoding and Content-Disposition headers
 		header("Content-Type: application/x-pkcs12");
 		header("Content-Transfer-Encoding: Binary");
-		header("Content-Disposition: atachment; filename=\"pkcs12_{$userid}_{$serial}.p12\"");
+		header("Content-Disposition: attachment; filename=\"pkcs12_{$userid}_{$serial}.p12\"");
 
 		// Encrypt PKCS#12 for user to download
 		openssl_pkcs12_export($pkcs12_arr["cert"], $pkcs12, $pkcs12_arr["pkey"], $_POST["pw"]);
