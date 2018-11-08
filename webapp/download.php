@@ -20,7 +20,7 @@ try {
 	$serial = $mysqli->real_escape_string(round($_GET["serial"]));
 
 	// Check if serial exists
-	$res = $mysqli->query("SELECT user, pkcs12, revoked FROM certificates WHERE serial_nr='{$serial}' LIMIT 1");
+	$res = $mysqli->query("SELECT user, pkcs12, salt, revoked FROM certificates WHERE serial_nr='{$serial}' LIMIT 1");
 
 	if($res->num_rows != 1) {
 		throw new Exception("Certificate with serial number {$serial} does not exist");
@@ -40,13 +40,40 @@ try {
 
 	// At this point, the user requested a valid vertificate that he owns. Thus, downloading it is allowed.
 
-	// Set Content-Type, Content-Transfer-Encoding and Content-Disposition headers
-	header("Content-Type: application/x-pkcs12");
-	header("Content-Transfer-Encoding: Binary");
-	header("Content-Disposition: atachment; filename=\"pkcs12_{$userid}_{$serial}.p12\"");
+	// Check if POST or not
+	if(($_SERVER["REQUEST_METHOD"] == "POST") AND isset($_POST["pw"]) AND !empty($_POST["pw"])) {
+		// The user requested a download
 
-	// Echo content
-	echo $cert["pkcs12"];
+		// Decrypt PKCS12 first
+
+		///////////////////////////////////////////////////////////
+		// DO NOT CHANGE THESE LINES, THIS WILL BREAK THE SYSTEM //
+		$pepper = "848cfdc57e446d02d26c0beac803a69cc7dd96d240134778f9c4f27d685f1dc2d544decd90a4d9e63920c820587f3030daa4332d9bb121e62e2e6e27ec80a5a0";
+		///////////////////////////////////////////////////////////
+
+		if(!openssl_pkcs12_read($cert["pkcs12"], $pkcs12_arr, $cert["salt"].$pepper)) {
+			error_500("Could not decrypt PKCS#12. Please tell a CA administrator immediately!");
+		}
+
+		// Set Content-Type, Content-Transfer-Encoding and Content-Disposition headers
+		header("Content-Type: application/x-pkcs12");
+		header("Content-Transfer-Encoding: Binary");
+		header("Content-Disposition: atachment; filename=\"pkcs12_{$userid}_{$serial}.p12\"");
+
+		// Encrypt PKCS#12 for user to download
+		openssl_pkcs12_export($pkcs12_arr["cert"], $pkcs12, $pkcs12_arr["pkey"], $_POST["pw"]);
+		// Echo content
+		echo $pkcs12;
+	} else {
+		// Show form to the user to enter download password
+		$title = "Certificate Download";
+		$content = '<p>Please enter a password to encrypt the PKCS#12 file. For safety reasons, this should not be your account password!</p>
+		<form action="" method="POST">
+			<p><input type="password" name="pw" placeholder="Encryption password" required /></p>
+			<p><input type="submit" value="Download PKCS#12 File" /></p>
+		</form>';
+		echo content_to_html($content, $title);
+	}
 } catch(Exception $e) {
 	$title = "Certificate Download";
 	$content = '<div class="alert alert-danger">'.$e->getMessage().'</div>
