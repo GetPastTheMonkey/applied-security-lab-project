@@ -12,13 +12,17 @@ function content_to_html($content, $title) {
 		<ul class="linkList">
 			<li><a href="list_certs.php"><span class="fa fa-fw fa-list"></span> List My Certificates</a></li>
 			<li><a href="new_cert.php"><span class="fa fa-fw fa-plus"></span> Create New Certificate</a></li>
-			<li><a href="logout.php"><span class="fa fa-fw fa-sign-out"></span> Logout</a></li>
-		</ul>';
+			<li><a href="revocation_list.php"><span class="fa fa-fw fa-search"></span> Revocation List</a></li>';
+
+		// Don't show logout button if the user is logged in with a certificate
+		if(isset($_SERVER["SSL_CLIENT_VERIFY"]) == "NONE") $sidebar .= '<li><a href="logout.php"><span class="fa fa-fw fa-sign-out"></span> Logout</a></li>';
+		$sidebar .= '</ul>';
 	} else {
 		$sidebar = '<div id="small-profile">
 			You are <strong>not</strong> logged in
 		</div>
 		<ul id="linkList">
+			<li><a href="revocation_list.php"><span class="fa fa-fw fa-search"></span> Revocation List</a></li>
 			<li><a href="login.php"><span class="fa fa-fw fa-lg fa-arrow-right"></span> Login</a></li>
 		</ul>';
 	}
@@ -59,6 +63,7 @@ function content_to_html($content, $title) {
 					</div>
 					<ul id="top-nav-ul">
 						<li><a href="./"><span class="fa fa-fw fa-home"></span> Home</a></li>
+						<li><a href="revocation_list.php"><span class="fa fa-fw fa-search"></span> Revocation List</a></li>
 						<li id="top-nav-panel-opener"><a href="javascript:void(0)" onclick="openSidePanel()"><span class="fa fa-fw fa-arrow-left"></span> Open Personal Panel</a></li>
 					</ul>
 				</div>
