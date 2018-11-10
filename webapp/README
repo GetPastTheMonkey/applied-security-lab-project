@@ -11,5 +11,3 @@ Update the following variables in core/config.php
  * $CONFIG["DB_PASSWORD"] (Password of the given username)
  * $CONFIG["DB_NAME"] (Name of the database)
 
-IMPORTANT: Remove the db folder before releasing the project!
-(Otherwise the user information is publicly available)
