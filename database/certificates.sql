@@ -6,3 +6,4 @@ CREATE TABLE certificates (
 	created DATETIME NOT NULL,
 	revoked DATETIME DEFAULT NULL
 );
+
