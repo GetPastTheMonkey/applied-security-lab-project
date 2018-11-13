@@ -13,8 +13,8 @@ It is very simple to setup a server. Follow these steps:
   * Select the downloaded `.iso` file as booting medium
   * Follow the installation guide of Ubuntu
   * After restarting the machine, log in to the account you just created
-  * Download PHP 7.2 by running `sudo apt-get install php7.2`
-  * Clone this Git repository by running `git clone https://gitlab.vis.ethz.ch/app_sec_lab/applied-security-lab-project
+  * Download PHP 7.2 by running `sudo apt-get install php`
+  * Clone this Git repository by running `git clone https://gitlab.vis.ethz.ch/app_sec_lab/applied-security-lab-project`
   * `cd`into the repo by running `cd applied-security-lab-project`
   * Decide what server you would like to set up. There are four possibilities:
     * `webapp`: The web frontend for users and administrators
