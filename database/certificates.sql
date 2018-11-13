@@ -1,9 +1,0 @@
-CREATE TABLE certificates (
-	serial_nr BIGINT(20) UNSIGNED PRIMARY KEY,
-	user VARCHAR(64) NOT NULL,
-	pkcs12 LONGBLOB NOT NULL,
-	purpose TEXT NOT NULL,
-	created DATETIME NOT NULL,
-	revoked DATETIME DEFAULT NULL
-);
-
