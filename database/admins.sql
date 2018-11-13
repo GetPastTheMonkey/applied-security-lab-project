@@ -1,8 +1,0 @@
-CREATE TABLE admins (
-	admin_id VARCHAR(64) PRIMARY KEY,
-	lastname VARCHAR(64) NOT NULL,
-	firstname VARCHAR(64) NOT NULL,
-	email VARCHAR(64) NOT NULL,
-	pwd CHAR(128) NOT NULL,
-	salt CHAR(128) NOT NULL
-);
