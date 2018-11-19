@@ -1,4 +1,4 @@
-<?
-// Temporary file for setup purposes
-phpinfo();
+<?php
+include("core/include.php");
+error_403();
 ?>
