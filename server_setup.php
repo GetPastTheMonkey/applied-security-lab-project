@@ -148,7 +148,7 @@ try {
 	// SQL stuff
 	if(!is_null($config["database"])) {
 		// Need to install mysql-server
-		system("sudo apt-get install mysql-server --yes", $ret);
+		system("sudo apt-get install mysql-server php-mysql --yes", $ret);
 		if($ret) throw new Exception("Could not install mysql-server");
 
 		// Run SQL file
