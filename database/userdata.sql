@@ -31,7 +31,7 @@ CREATE TABLE logins (
 	PRIMARY KEY(session_id, token)
 );
 
-CREATE USER 'asl_userdata_user'@'localhost' IDENTIFIED BY 'my_secure_password_that_i_have_to_change';
+CREATE USER 'asl_userdata_user'@'localhost' IDENTIFIED BY 'b6b6c89ef771cec763e1';
 
 GRANT SELECT, UPDATE (lastname, firstname, email, pwd) ON users TO 'asl_userdata_user'@'localhost';
 GRANT SELECT, UPDATE (lastname, firstname, email, pwd, salt) ON admins TO 'asl_userdata_user'@'localhost';
