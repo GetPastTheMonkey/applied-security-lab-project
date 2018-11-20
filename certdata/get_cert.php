@@ -12,6 +12,10 @@ $res = $mysqli->query("SELECT * FROM certificates WHERE serial_nr='{$serial}' LI
 
 if($res->num_rows != 1) error_404("No certificate exists with this serial number");
 
-print_json(array("cert_data" => $res->fetch_assoc()));
+$cert = $res->fetch_assoc();
+
+$cert["pkcs12"] = urlencode($cert["pkcs12"]);
+
+print_json(array("cert_data" => $cert));
 
 ?>

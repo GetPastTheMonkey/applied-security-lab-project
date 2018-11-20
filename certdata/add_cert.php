@@ -15,7 +15,7 @@ if(!is_numeric($_POST["serial"])) error_400("Parameter 'serial' must be a numeri
 // Escape all parameters
 $serial = $mysqli->real_escape_string($_POST["serial"]);
 $user = $mysqli->real_escape_string($_POST["user"]);
-$pkcs12 = $mysqli->real_escape_string($_POST["pkcs12"]);
+$pkcs12 = $mysqli->real_escape_string(urldecode($_POST["pkcs12"]));
 $salt = $mysqli->real_escape_string($_POST["salt"]);
 $purpose = $mysqli->real_escape_string($_POST["purpose"]);
 
