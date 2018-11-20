@@ -21,7 +21,7 @@ $data = $res->fetch_assoc();
 if(!is_null($data["expired"]))
 	error_404("Login expired");
 
-$res = $mysqli->query("SELECT admin_id FROM admins WHERE uid='{$data["uid"]}' LIMIT 1");
+$res = $mysqli->query("SELECT admin_id FROM admins WHERE admin_id='{$data["uid"]}' LIMIT 1");
 
 if($res->num_rows != 1)
 	error_404("Not in admins table");
