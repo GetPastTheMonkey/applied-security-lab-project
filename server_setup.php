@@ -20,6 +20,8 @@ $config = array(
 			"www.imovie.local" => "webapp",
 			"admin.imovie.local" => "admin"
 		),
+		"needs_curl" => TRUE,
+		"ca_pkey" => FALSE,
 		"database" => NULL
 	),
 	"coreca" => array(
@@ -27,6 +29,8 @@ $config = array(
 		"urls" => array(
 			"ca.api.imovie.local" => "core-ca"
 		),
+		"needs_curl" => TRUE,
+		"ca_pkey" => TRUE,
 		"database" => NULL
 	),
 	"userdata" => array(
@@ -34,6 +38,8 @@ $config = array(
 		"urls" => array(
 			"userdata.api.imovie.local" => "userdata"
 		),
+		"needs_curl" => FALSE,
+		"ca_pkey" => FALSE,
 		"database" => "userdata.sql"
 	),
 	"certdata" => array(
@@ -41,6 +47,8 @@ $config = array(
 		"urls" => array(
 			"certdata.api.imovie.local" => "certdata"
 		),
+		"needs_curl" => FALSE,
+		"ca_pkey" => FALSE,
 		"database" => "certdata.sql"
 	)
 );
@@ -101,6 +109,12 @@ try {
 	// Copy cacert.pem
 	if(!copy("certs/CA/cacert.pem", "/etc/ssl/cacert.pem")) throw new Exception("Could not copy CA certificate");
 
+	// Check if should copy CA private key
+	if($config["ca_pkey"]) {
+		if(!copy("certs/CA/cakey.pem", "/etc/ssl/cakey.pem"))
+			throw new Exception("Could not copyi CA private key");
+	}
+
 	// Remove apache2 default configs
 	system("sudo a2dissite 000-default.conf", $ret);
 	if($ret) throw new Exception("Could not dissite 000-default.conf");
@@ -154,6 +168,12 @@ try {
 		// Run SQL file
 		system("mysql -uroot -proot < database/{$config["database"]}", $ret);
 		if($ret) throw new Exception("Could not run mysql script");
+	}
+
+	// Check if curl is needed
+	if($config["needs_curl"]) {
+		system("sudo apt-get install php-curl --yes", $ret);
+		if($ret) throw new Exception("Could not install php-curl");
 	}
 
 	// Write IP configuration
