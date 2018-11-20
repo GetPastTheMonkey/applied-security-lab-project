@@ -3,7 +3,6 @@
 function content_to_html($content, $title) {
 	global $CONFIG;
 	global $userid;
-	global $mysqli;
 	if(!empty($userid)) {
 		$sidebar = '
 		<div id="small-profile">
@@ -92,18 +91,13 @@ function require_login() {
 function authenticate(){
 	if(!array_key_exists("token", $_COOKIE))
 		return "";
-	global $mysqli;
-	$token = $mysqli->real_escape_string($_COOKIE["token"]);
-	$result = $mysqli->query("SELECT uid FROM logins WHERE session_id LIKE '".session_id()."' AND token LIKE '{$token}' AND expired IS NULL LIMIT 1");
-	if(!$result) {
-		error_500('Database error while authenticating: '.$mysqli->error);
-		exit();
-	} elseif($result->num_rows != 1) {
-		return "";
-	}
-	return $result->fetch_assoc()["uid"];
-}
+	$result = userdata("authenticate_user.php?session_id=".session_id()."&token={$_COOKIE["token"]}");
+	if(isset($result["uid"]))
+		return $result["uid"];
 
+	return "";
+}
+/*
 function authenticate_certificate() {
 	global $mysqli;
 
@@ -142,16 +136,9 @@ function authenticate_certificate() {
 	// At this point, the user has a valid certificate
 	return $cert["user"];
 }
-
-function generate_token($length, $charset=NULL){
-	if($charset === NULL){
-		$charset = "0123456789abcdefghijklmnopqrstuvwxyz";
-	}
-	$token = "";
-	for($i = 0; $i < $length; $i++){
-		$token .= $charset[rand(0, strlen($charset) - 1)];
-	}
-	return $token;
+ */
+function generate_token($length){
+	return bin2hex(random_bytes($length/2));
 }
 
 function error_403() {
@@ -174,6 +161,50 @@ function error_500($msg = '') {
 	http_response_code(500);
 	echo content_to_html($content, $title);
 	die();
+}
+
+function core_ca($url, $post=NULL) {
+	return server_request("ca.api.imovie.local", $url, $post);
+}
+
+function userdata($url, $post=NULL) {
+	return server_request("userdata.api.imovie.local", $url, $post);
+}
+
+function server_request($host, $url, $post=NULL) {
+	$ch = curl_init();
+	$options = array(
+		CURLOPT_URL => "https://{$host}/{$url}",
+		CURLOPT_RETURNTRANSFER => true,
+
+		// Verify myself
+		CURLOPT_SSLKEY => "/etc/ssl/www.imovie.local_pkey.pem",
+		CURLOPT_KEYPASSWD => "ceb07f5203791721a90e",
+		CURLOPT_SSLCERT => "/etc/ssl/www.imovie.local_cert.pem",
+
+		// Verify other server
+		CURLOPT_SSL_VERIFYPEER => true,
+		CURLOPT_SSL_VERIFYHOST => 2,
+		CURLOPT_CAINFO => "/etc/ssl/cacert.pem"
+	);
+	curl_setopt_array($ch, $options);
+
+	if(is_array($post)) {
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post));
+	}
+
+	$response = curl_exec($ch);
+	$errno = curl_errno($ch);
+	$code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+	curl_close($ch);
+
+	if($errno != 0) error_500("Could not connect to {$host}");
+
+	$return = json_decode($response, true);
+	if(is_null($return)) error_500("Could not decode response from {$host}: <pre>{$response}</pre>");
+
+	return $return;
 }
 
 ?>

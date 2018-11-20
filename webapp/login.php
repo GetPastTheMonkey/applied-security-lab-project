@@ -24,34 +24,34 @@ $form = '<form action="" method="POST">
 
 if(($_SERVER["REQUEST_METHOD"] == "POST") AND isset($_POST["username"]) AND isset($_POST["password"]) AND !empty($_POST["username"]) AND !empty($_POST["password"])) {
 	try {
-		$username = $mysqli->real_escape_string($_POST["username"]);
-		$res = $mysqli->query("SELECT uid, pwd FROM users WHERE uid LIKE '{$username}' LIMIT 1");
-		
-		if(!$res) {
-			error_500('There was an error with the database query. Please contact an administrator with the followin error message:<br /><code>'.$mysqli->error.'</code>');
-		} elseif($res->num_rows != 1) {
-			throw new Exception("Mail / Password combination incorrect");
-		}
-		
-		$data = $res->fetch_assoc();
-		
+		$username = $_POST["username"];
+		$data = userdata("get_user.php?user={$username}");
+
+		if(isset($data["status"]))
+			throw new Exception();
+
 		// Check if user pw was correct
-		if($data["pwd"] != sha1($_POST['password'])){
-			throw new Exception("Mail / Password combination incorrect");
-		}
-		
-		// Create new token
-		$token = generate_token(128);
-		
-		// Update DB and user cookie
+		if($data["pwd"] != sha1($_POST['password']))
+			throw new Exception();
+
+		// Add login to userdata
+		$token = userdata("add_login.php", array(
+			"uid" => $data["uid"],
+			"session_id" => session_id(),
+			"ip_address" => $_SERVER["REMOTE_ADDR"]
+		));
+
+		if(is_array($token))
+			error_500("Could not log login. Please try again later. If this issue comes up again, please inform an administrator.");
+
+		// Send token cookie to user
 		setcookie("token", $token);
-		$mysqli->query("INSERT INTO logins (uid, session_id, token, timestamp, ip_address) VALUES ('{$data["uid"]}', '".session_id()."', '{$token}', NOW(), '{$_SERVER["REMOTE_ADDR"]}')");
 		
 		// Forward user
 		header("Location: {$redir_url}");
 	} catch(Exception $e) {
 		$content = '<div class="alert alert-warning">
-			'.$e->getMessage().'
+			Mail / Password combination incorrect
 		</div>
 		'.$form;
 	}

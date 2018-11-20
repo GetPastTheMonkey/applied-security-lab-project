@@ -6,9 +6,9 @@ require_login();
 
 $title = "My Certificates";
 
-$res = $mysqli->query("SELECT * FROM certificates WHERE user='{$userid}' ORDER BY serial_nr ASC");
+$certs = core_ca("get_certs_by_user.php?user={$userid}");
 
-if($res->num_rows == 0) {
+if(empty($certs)) {
 	// User does not have any certificates yet
 	$content = '<div class="alert alert-info">You don\'t have any certificates yet. You can generate one <a href="new_cert.php">here</a></div>';
 } else {
@@ -16,7 +16,7 @@ if($res->num_rows == 0) {
 	$valid_table = '';
 	$revoked_table = '';
 
-	while($c = $res->fetch_assoc()) {
+	foreach($certs AS $c) {
 		if(is_null($c["revoked"])) {
 			// Certificate has not been revoked
 			$valid_table .= '<tr>

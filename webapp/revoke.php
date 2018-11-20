@@ -17,22 +17,26 @@ try {
 		throw new Exception("Parameter <code>serial</code> must be a numerical value, but it is not");
 	}
 
-	$serial = $mysqli->real_escape_string(round($_GET["serial"]));
+	$serial = round($_GET["serial"]);
 
 	// Check if serial exists and if user is the owner
-	$res = $mysqli->query("SELECT user FROM certificates WHERE serial_nr='{$serial}' LIMIT 1");
-	
-	if($res->num_rows != 1) {
-		throw new Exception("Certificate with serial number {$serial} does not exist");
+	$cert = core_ca("get_cert.php?serial={$serial}");
+
+	if(!isset($cert["cert_data"]))
+		throw new Exception("Could not load certificate data for this serial number. Either the serial number does not exist or there was an internal error in ca.api.imovie.local or certdata.api.imovie.local");
+
+	if($cert["cert_data"]["user"] != $userid)
+		throw new Exception("Certificate with this serial number is not yours");
+
+	$result = core_ca("revoke_cert.php", array(
+		"serial" => $serial
+	));
+
+	if($result["status"]["status_code"] == 200) {
+		$content = '<div class="alert alert-success"><span class="fa fa-fw fa-check"></span> Certificate with serial '.$serial.' successfully revoked</div>';
+	} else {
+		error_500("Could not revoke certificate with this serial number. Response from certdata.api.imovie.local via ca.api.imovie.local: <pre>".print_r($result, true)."</pre>");
 	}
-
-	if($res->fetch_assoc()["user"] != $userid) {
-		throw new Exception("Certificate with serial number {$serial} is not yours");
-	}
-
-	$mysqli->query("UPDATE certificates SET revoked=NOW() WHERE serial_nr='{$serial}' LIMIT 1");
-
-	$content = '<div class="alert alert-success"><span class="fa fa-fw fa-check"></span> Certificate with serial '.$serial.' successfully revoked</div>';
 } catch(Exception $e) {
 	$content = '<div class="alert alert-danger"><span class="fa fa-fw fa-times"></span> '.$e->getMessage().'</div>';
 }

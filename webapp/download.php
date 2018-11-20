@@ -17,16 +17,17 @@ try {
 		throw new Exception("Parameter <code>serial</code> must be a numerical value, but it is not");
 	}
 
-	$serial = $mysqli->real_escape_string(round($_GET["serial"]));
+	$serial = round($_GET["serial"]);
+
+	// Load certificate data
+	$cert = core_ca("get_cert.php?serial={$serial}");
 
 	// Check if serial exists
-	$res = $mysqli->query("SELECT user, pkcs12, salt, revoked FROM certificates WHERE serial_nr='{$serial}' LIMIT 1");
-
-	if($res->num_rows != 1) {
+	if(!isset($cert["cert_data"])) {
 		throw new Exception("Certificate with serial number {$serial} does not exist");
 	}
 
-	$cert = $res->fetch_assoc();
+	$cert = $cert["cert_data"];
 
 	// Check if user is the owner
 	if($cert["user"] != $userid) {
@@ -46,12 +47,12 @@ try {
 
 		// Decrypt PKCS12 first
 
-		///////////////////////////////////////////////////////////
-		// DO NOT CHANGE THESE LINES, THIS WILL BREAK THE SYSTEM //
+		/////////////////////////////////////////////////////////
+		// DO NOT CHANGE THIS LINE, THIS WILL BREAK THE SYSTEM //
 		$pepper = "848cfdc57e446d02d26c0beac803a69cc7dd96d240134778f9c4f27d685f1dc2d544decd90a4d9e63920c820587f3030daa4332d9bb121e62e2e6e27ec80a5a0";
-		///////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////
 
-		if(!openssl_pkcs12_read($cert["pkcs12"], $pkcs12_arr, $cert["salt"].$pepper)) {
+		if(!openssl_pkcs12_read(urldecode($cert["pkcs12"]), $pkcs12_arr, $cert["salt"].$pepper)) {
 			error_500("Could not decrypt PKCS#12. Please tell a CA administrator immediately!");
 		}
 
