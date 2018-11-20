@@ -137,9 +137,6 @@ function authenticate_certificate() {
 	return $cert["user"];
 }
  */
-function generate_token($length){
-	return bin2hex(random_bytes($length/2));
-}
 
 function error_403() {
 	$content = '<div class="alert alert-danger">You must be logged in to be able to view this page</div>';
