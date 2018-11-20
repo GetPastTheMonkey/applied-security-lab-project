@@ -35,6 +35,6 @@ CREATE USER 'asl_userdata_user'@'localhost' IDENTIFIED BY 'my_secure_password_th
 
 GRANT SELECT, UPDATE (lastname, firstname, email, pwd) ON users TO 'asl_userdata_user'@'localhost';
 GRANT SELECT, UPDATE (lastname, firstname, email, pwd, salt) ON admins TO 'asl_userdata_user'@'localhost';
-GRANT SELECT (uid, session_id, token, expired), INSERT ON logins TO 'asl_userdata_user'@'localhost';
+GRANT SELECT (uid, session_id, token, expired), UPDATE (expired), INSERT ON logins TO 'asl_userdata_user'@'localhost';
 
 SELECT 'Database setup of asl_userdata finished' AS ' ';
