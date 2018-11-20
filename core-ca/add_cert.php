@@ -10,7 +10,7 @@ if(!isset($_POST["user"]) OR !isset($_POST["name"]) OR !isset($_POST["mail"]) OR
 	error_400("Some parameters are not set. Make sure that the following parameters are set: user, name, mail, secret, purpose");
 
 $user = $_POST["user"];
-$secret = $_POST["secret"];
+$pepper = $_POST["secret"];
 $purpose = $_POST["purpose"];
 $name = urldecode($_POST["name"]);
 $mail = $_POST["mail"];
