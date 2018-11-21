@@ -22,7 +22,9 @@ $config = array(
 		),
 		"needs_curl" => TRUE,
 		"ca_pkey" => FALSE,
-		"database" => NULL
+		"database" => NULL,
+		"firewall_close_port_80" => FALSE,
+		"firewall_port_443_exception" => NULL
 	),
 	"coreca" => array(
 		"ip" => "192.168.1.13",
@@ -31,7 +33,9 @@ $config = array(
 		),
 		"needs_curl" => TRUE,
 		"ca_pkey" => TRUE,
-		"database" => NULL
+		"database" => NULL,
+		"firewall_close_port_80" => TRUE,
+		"firewall_port_443_exception" => "192.168.1.10"
 	),
 	"userdata" => array(
 		"ip" => "192.168.1.11",
@@ -40,7 +44,9 @@ $config = array(
 		),
 		"needs_curl" => FALSE,
 		"ca_pkey" => FALSE,
-		"database" => "userdata.sql"
+		"database" => "userdata.sql",
+		"firewall_close_port_80" => TRUE,
+		"firewall_port_443_exception" => "192.168.1.10"
 	),
 	"certdata" => array(
 		"ip" => "192.168.1.12",
@@ -49,7 +55,9 @@ $config = array(
 		),
 		"needs_curl" => FALSE,
 		"ca_pkey" => FALSE,
-		"database" => "certdata.sql"
+		"database" => "certdata.sql",
+		"firewall_close_port_80" => TRUE,
+		"firewall_port_443_exception" => "192.168.1.13"
 	)
 );
 
@@ -174,6 +182,22 @@ try {
 	if($config["needs_curl"]) {
 		system("sudo apt-get install php-curl --yes", $ret);
 		if($ret) throw new Exception("Could not install php-curl");
+	}
+
+	// Firewall confguration
+	system("sudo iptables --flush", $ret);
+	if($ret) throw new Exception("Could not flush iptables");
+
+	if($config["firewall_close_port_80"]) {
+		// Block all traffic on port 80 (HTTP)
+		system("sudo iptables -A INPUT -p tcp --dport 80 -j DROP", $ret);
+		if($ret) throw new Exception("Could not close HTTP port 80 in iptables");
+	}
+
+	if(!is_null($config["firewall_port_443_exception"])) {
+		// Open port 443 (HTTPS) only for exception
+		system("sudo iptables -A INPUT -p tcp ! -s {$config["firewall_port_443_exception"]} --dport 443 -j DROP", $ret);
+		if($ret) throw new Exception("Could not open HTTPS port 443 for only host {$config["firewall_port_443_exception"]}");
 	}
 
 	// Write IP configuration
