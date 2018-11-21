@@ -8,7 +8,7 @@ $title = "Certificate Download";
 
 try {
 	// Check if GET parameter serial is set
-	if(!isset($_GET["serial"]) OR empty($_GET["serial"])) {
+	if((!isset($_GET["serial"]) OR empty($_GET["serial"])) AND ($_GET["serial"] != 0)) {
 		throw new Exception("Parameter <code>serial</code> must be given, but it is not");
 	}
 
@@ -30,7 +30,7 @@ try {
 	$cert = $cert["cert_data"];
 
 	// Check if user is the owner
-	if($cert["user"] != $userid) {
+	if(!is_null($cert["user"]) AND ($cert["user"] != $userid)) {
 		throw new Exception("Certificate with serial number {$serial} is not yours");
 	}
 
@@ -51,6 +51,9 @@ try {
 		// DO NOT CHANGE THIS LINE, THIS WILL BREAK THE SYSTEM //
 		$pepper = "848cfdc57e446d02d26c0beac803a69cc7dd96d240134778f9c4f27d685f1dc2d544decd90a4d9e63920c820587f3030daa4332d9bb121e62e2e6e27ec80a5a0";
 		/////////////////////////////////////////////////////////
+
+		if($cert["serial_nr"] == 0)
+			$pepper = "";
 
 		if(!openssl_pkcs12_read(urldecode($cert["pkcs12"]), $pkcs12_arr, $cert["salt"].$pepper)) {
 			error_500("Could not decrypt PKCS#12. Please tell a CA administrator immediately!");
