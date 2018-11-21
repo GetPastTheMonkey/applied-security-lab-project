@@ -188,6 +188,83 @@ try {
 	system("sudo iptables --flush", $ret);
 	if($ret) throw new Exception("Could not flush iptables");
 
+	// DDoS protection, by javapipe.com
+
+	// Drop invalid packets
+	system("sudo iptables -t mangle -A PREROUTING -m conntrack --ctstate INVALID -j DROP", $ret);
+	if($ret) throw new Exception("Could not block invalid packets");
+
+	// Drop all non-SYN packets that are new
+	system("sudo iptables -t mangle -A PREROUTING -p tcp ! --syn -m conntrack --ctstate NEW -j DROP", $ret);
+	if($ret) throw new Exception("Could not block non-SYN new TCP packets");
+
+	// Drop all packets with suspicious MSS value
+	system("sudo iptables -t mangle -A PREROUTING -p tcp -m conntrack --ctstate NEW -m tcpmss ! --mss 536:65535 -j DROP", $ret);
+	if($ret) throw new Exception("Could not drop packets with suspicious MSS value");
+
+	// Drop all packets with bogus TCP flags
+	$flags = array(
+		"FIN,SYN,RST,PSH,ACK,URG NONE",
+		"FIN,SYN FIN,SYN",
+		"SYN,RST SYN,RST",
+		"FIN,RST FIN,RST",
+		"FIN,ACK FIN",
+		"ACK,URG URG",
+		"ACK,FIN FIN",
+		"ACK,PSH PSH",
+		"ALL ALL",
+		"ALL NONE",
+		"ALL FIN,PSH,URG",
+		"ALL SYN,FIN,PSH,URG",
+		"ALL SYN,RST,ACK,FIN,URG"
+	);
+
+	foreach($flags AS $i => $f) {
+		system("sudo iptables -t mangle -A PREROUTING -p tcp --tcp-flags {$f} -j DROP", $ret);
+		if($ret) throw new Exception("Could not block packets with bogus TCP flags #{$i}");
+	}
+
+	// Drop ICMP protocol
+	system("sudo iptables -t mangle -A PREROUTING -p icmp -j DROP", $ret);
+	if($ret) throw new Exception("Could not drop all ICMP packets");
+
+	// Drop fragments
+	system("sudo iptables -t mangle -A PREROUTING -f -j DROP", $ret);
+	if($ret) throw new Exception("Could not drop all fragments");
+
+	// Limit connections per source IP
+	system("sudo iptables -A INPUT -p tcp -m connlimit --connlimit-above 111 -j REJECT --reject-with tcp-reset", $ret);
+	if($ret) throw new Exception("Could not limit number of connections per source IP");
+
+	// Limit RST packets
+	system("sudo iptables -A INPUT -p tcp --tcp-flags RST RST -m limit --limit 2/s --limit-burst 2 -j ACCEPT", $ret);
+	if($ret) throw new Exception("Could not limit RST packets #1");
+	system("sudo iptables -A INPUT -p tcp --tcp-flags RST RST -j DROP", $ret);
+	if($ret) throw new Exception("Could not limit RST packets #2");
+
+	// Limit new TCP connections per second per source IP
+	system("sudo iptables -A INPUT -p tcp -m conntrack --ctstate NEW -m limit --limit 60/s --limit-burst 20 -j ACCEPT", $ret);
+	if($ret) throw new Exception("Could not limit new conns per source IP #1");
+	system("sudo iptables -A INPUT -p tcp -m conntrack --ctstate NEW -j DROP", $ret);
+	if($ret) throw new Exception("Could not limit new conns per source IP #2");
+
+	// Anti SSH-brute force
+	system("sudo iptables -A INPUT -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --set", $ret);
+	if($ret) throw new Exception("Could not protect against SSH brute force #1");
+	system("sudo iptables -A INPUT -p tcp --dport ssh -m conntrack --ctstate NEW -m recent --update --seconds 60 --hitcount 10 -j DROP", $ret);
+	if($ret) throw new Exception("Could not protect against SSH brute force #2");
+
+	// Anti port scanning
+	system("sudo iptables -N port-scanning", $ret);
+	if($ret) throw new Exception("Could not protect against port scanning #1");
+	system("sudo iptables -A port-scanning -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s --limit-burst 2 -j RETURN", $ret);
+	if($ret) throw new Exception("Could not protect against port scanning #2");
+	system("sudo iptables -A port-scanning -j DROP", $ret);
+	if($ret) throw new Exception("Could not protect against port scanning #3");
+
+	// End of DDoS protection, by javapipe.com
+
+	// Add our own set of rules
 	if($config["firewall_close_port_80"]) {
 		// Block all traffic on port 80 (HTTP)
 		system("sudo iptables -A INPUT -p tcp --dport 80 -j DROP", $ret);
