@@ -11,7 +11,7 @@ if(!isset($_SERVER["SSL_CLIENT_VERIFY"]))
 if($_SERVER["SSL_CLIENT_VERIFY"] != "SUCCESS")
 	error_403();
 
-if(!in_array($_SERVER["SSL_CLIENT_M_SERIAL"], $CONFIG["TRUSTED"]))
+if(!in_array($_SERVER["SSL_CLIENT_M_SERIAL"], $CONFIG["TRUSTED"]) AND !isset($skip))
 	error_403();
 
 ?>

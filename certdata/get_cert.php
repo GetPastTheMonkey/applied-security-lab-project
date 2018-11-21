@@ -1,5 +1,7 @@
 <?php
 
+$skip = "";
+
 include("core/include.php");
 
 // Require a certificate ID as GET variable that is numeric
