@@ -129,10 +129,10 @@ function authenticate_certificate() {
 	// At this point, the user has a valid certificate
 	$admin = userdata("get_admin.php?admin={$cert["user"]}");
 
-	if(!isset($user["uid"]))
+	if(!isset($admin["admin_id"]))
 		return "";
 
-	return $user["uid"];
+	return $admin["admin_id"];
 }
 
 function error_403() {
