@@ -14,7 +14,7 @@ function content_to_html($content, $title) {
 			<li><a href="revocation_list.php"><span class="fa fa-fw fa-search"></span> Revocation List</a></li>';
 
 		// Don't show logout button if the user is logged in with a certificate
-		if(isset($_SERVER["SSL_CLIENT_VERIFY"]) == "NONE") $sidebar .= '<li><a href="logout.php"><span class="fa fa-fw fa-sign-out"></span> Logout</a></li>';
+		if(!$authentication_by_certificate) $sidebar .= '<li><a href="logout.php"><span class="fa fa-fw fa-sign-out"></span> Logout</a></li>';
 		$sidebar .= '</ul>';
 	} else {
 		$sidebar = '<div id="small-profile">
@@ -97,10 +97,8 @@ function authenticate(){
 
 	return "";
 }
-/*
-function authenticate_certificate() {
-	global $mysqli;
 
+function authenticate_certificate() {
 	// Check if the user submitted a client certificate
 	if(!isset($_SERVER["SSL_CLIENT_VERIFY"])) {
 		return "";
@@ -112,21 +110,21 @@ function authenticate_certificate() {
 	}
 
 	// Check if the serial number is numeric
-	if(!is_numeric($_SERVER["SSL_CLIENT_M_SERIAL"])) {
+	if(!is_numeric(hexdec($_SERVER["SSL_CLIENT_M_SERIAL"]))) {
 		error_500("Client certificate does not have a numerical value as serial number");
 	}
 
-	$serial = $mysqli->real_escape_string(round($_SERVER["SSL_CLIENT_M_SERIAL"]));
+	$serial = round(hexdec($_SERVER["SSL_CLIENT_M_SERIAL"]));
 
 	// Load certificate data
-	$res = $mysqli->query("SELECT user, revoked FROM certificates WHERE serial_nr='{$serial}' LIMIT 1");
+	$cert = core_ca("get_cert.php?serial={$serial}");
 
 	// Check if certificate exists
-	if($res->num_rows != 1) {
+	if(!isset($cert["cert_data"])) {
 		return "";
 	}
 
-	$cert = $res->fetch_assoc();
+	$cert = $cert["cert_data"];
 
 	// Check if the certificate has been revoked
 	if(!is_null($cert["revoked"])) {
@@ -134,9 +132,13 @@ function authenticate_certificate() {
 	}
 
 	// At this point, the user has a valid certificate
-	return $cert["user"];
+	$user = userdata("get_user.php?user={$cert["user"]}");
+
+	if(!isset($user["uid"]))
+		return "";
+
+	return $user["uid"];
 }
- */
 
 function error_403() {
 	$content = '<div class="alert alert-danger">You must be logged in to be able to view this page</div>';

@@ -11,9 +11,9 @@ function content_to_html($content, $title) {
 		<ul class="linkList">
 			<li><a href="overview.php"><span class="fa fa-fw fa-dashboard"></span> Overview</a></li>
 			<li><a href="list_certs.php"><span class="fa fa-fw fa-list"></span> List My Certificates</a></li>
-			<li><a href="new_cert.php"><span class="fa fa-fw fa-plus"></span> Create New Certificate</a></li>
-			<li><a href="logout.php"><span class="fa fa-fw fa-sign-out"></span> Logout</a></li>
-		</ul>';
+			<li><a href="new_cert.php"><span class="fa fa-fw fa-plus"></span> Create New Certificate</a></li>';
+			if(!$authentication_by_certificate) $sidebar .= '<li><a href="logout.php"><span class="fa fa-fw fa-sign-out"></span> Logout</a></li>';
+		$sidebar .= '</ul>';
 	} else {
 		$sidebar = '<div id="small-profile">
 			You are <strong>not</strong> logged in
@@ -92,10 +92,8 @@ function authenticate(){
 		return $result["admin_id"];
 	return "";
 }
-/*
-function authenticate_certificate() {
-	global $mysqli;
 
+function authenticate_certificate() {
 	// Check if the user submitted a client certificate
 	if(!isset($_SERVER["SSL_CLIENT_VERIFY"])) {
 		return "";
@@ -107,21 +105,21 @@ function authenticate_certificate() {
 	}
 
 	// Check if the serial number is numeric
-	if(!is_numeric($_SERVER["SSL_CLIENT_M_SERIAL"])) {
+	if(!is_numeric(hexdec($_SERVER["SSL_CLIENT_M_SERIAL"]))) {
 		error_500("Client certificate does not have a numerical value as serial number");
 	}
 
-	$serial = $mysqli->real_escape_string(round($_SERVER["SSL_CLIENT_M_SERIAL"]));
+	$serial = round(hexdec($_SERVER["SSL_CLIENT_M_SERIAL"]));
 
 	// Load certificate data
-	$res = $mysqli->query("SELECT user, revoked FROM certificates WHERE serial_nr='{$serial}' LIMIT 1");
+	$cert = core_ca("get_cert.php?serial={$serial}");
 
 	// Check if certificate exists
-	if($res->num_rows != 1) {
+	if(!isset($cert["cert_data"])) {
 		return "";
 	}
 
-	$cert = $res->fetch_assoc();
+	$cert = $cert["cert_data"];
 
 	// Check if the certificate has been revoked
 	if(!is_null($cert["revoked"])) {
@@ -129,9 +127,13 @@ function authenticate_certificate() {
 	}
 
 	// At this point, the user has a valid certificate
-	return $cert["user"];
+	$admin = userdata("get_admin.php?admin={$cert["user"]}");
+
+	if(!isset($user["uid"]))
+		return "";
+
+	return $user["uid"];
 }
- */
 
 function error_403() {
 	$content = '<div class="alert alert-danger">You must be logged in to be able to view this page</div>';
