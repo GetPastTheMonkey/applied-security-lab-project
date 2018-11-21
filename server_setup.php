@@ -188,6 +188,19 @@ try {
 	system("sudo iptables --flush", $ret);
 	if($ret) throw new Exception("Could not flush iptables");
 
+	// Add our own set of rules
+	if($config["firewall_close_port_80"]) {
+		// Block all traffic on port 80 (HTTP)
+		system("sudo iptables -A INPUT -p tcp --dport 80 -j DROP", $ret);
+		if($ret) throw new Exception("Could not close HTTP port 80 in iptables");
+	}
+
+	if(!is_null($config["firewall_port_443_exception"])) {
+		// Open port 443 (HTTPS) only for exception
+		system("sudo iptables -A INPUT -p tcp ! -s {$config["firewall_port_443_exception"]} --dport 443 -j DROP", $ret);
+		if($ret) throw new Exception("Could not open HTTPS port 443 for only host {$config["firewall_port_443_exception"]}");
+	}
+
 	// DDoS protection, by javapipe.com
 
 	// Drop invalid packets
@@ -263,19 +276,6 @@ try {
 	if($ret) throw new Exception("Could not protect against port scanning #3");
 
 	// End of DDoS protection, by javapipe.com
-
-	// Add our own set of rules
-	if($config["firewall_close_port_80"]) {
-		// Block all traffic on port 80 (HTTP)
-		system("sudo iptables -A INPUT -p tcp --dport 80 -j DROP", $ret);
-		if($ret) throw new Exception("Could not close HTTP port 80 in iptables");
-	}
-
-	if(!is_null($config["firewall_port_443_exception"])) {
-		// Open port 443 (HTTPS) only for exception
-		system("sudo iptables -A INPUT -p tcp ! -s {$config["firewall_port_443_exception"]} --dport 443 -j DROP", $ret);
-		if($ret) throw new Exception("Could not open HTTPS port 443 for only host {$config["firewall_port_443_exception"]}");
-	}
 
 	// Write IP configuration
 	$ip_configs = "network:
