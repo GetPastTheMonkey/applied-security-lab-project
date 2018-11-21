@@ -22,14 +22,15 @@ $form = '<form action="" method="POST">
 	<button type="submit" class="btn btn-primary">Login</button>
 </form>';
 
+
 if(($_SERVER["REQUEST_METHOD"] == "POST") AND isset($_POST["username"]) AND isset($_POST["password"]) AND !empty($_POST["username"]) AND !empty($_POST["password"])) {
 	try {
 		$username = $_POST["username"];
-		$data = $userdata("get_admin.php?admin={$username}");
+		$data = userdata("get_admin.php?admin={$username}");
 
 		if(isset($data["status"]))
 			throw new Exception();
-		
+
 		// Check if user pw was correct
 		if($data["pwd"] != hash("sha512", $data["salt"].$_POST['password']))
 			throw new Exception();
