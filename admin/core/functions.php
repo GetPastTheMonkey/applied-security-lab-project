@@ -3,6 +3,7 @@
 function content_to_html($content, $title) {
 	global $CONFIG;
 	global $userid;
+	global $authentication_by_certificate;
 	if(!empty($userid)) {
 		$sidebar = '
 		<div id="small-profile">
