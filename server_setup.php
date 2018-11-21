@@ -20,6 +20,7 @@ $config = array(
 			"www.imovie.local" => "webapp",
 			"admin.imovie.local" => "admin"
 		),
+		"is_backup" => FALSE,
 		"needs_curl" => TRUE,
 		"ca_pkey" => FALSE,
 		"database" => NULL,
@@ -31,6 +32,7 @@ $config = array(
 		"urls" => array(
 			"ca.api.imovie.local" => "core-ca"
 		),
+		"is_backup" => FALSE,
 		"needs_curl" => TRUE,
 		"ca_pkey" => TRUE,
 		"database" => NULL,
@@ -42,6 +44,7 @@ $config = array(
 		"urls" => array(
 			"userdata.api.imovie.local" => "userdata"
 		),
+		"is_backup" => TRUE,
 		"needs_curl" => FALSE,
 		"ca_pkey" => FALSE,
 		"database" => "userdata.sql",
@@ -53,6 +56,7 @@ $config = array(
 		"urls" => array(
 			"certdata.api.imovie.local" => "certdata"
 		),
+		"is_backup" => FALSE,
 		"needs_curl" => FALSE,
 		"ca_pkey" => FALSE,
 		"database" => "certdata.sql",
@@ -289,6 +293,35 @@ try {
 		throw new Exception("Could not write .yaml file for netplan configuration");
 	system("sudo netplan apply", $ret);
 	if($ret) throw new Exception("Could not apply netplan config");
+
+	// Do appropriate SSH action
+	if($config["is_backup"]) {
+		// The server is the backup server
+		// Add backup_user
+		system('sudo adduser --disabled-password --gecos "" backup_user', $ret);
+		if($ret) throw new Exception("Could not add user 'backup_user'");
+
+		// Add .ssh folder
+		if(!mkdir("/home/backup_user/.ssh"))
+			throw new Exception("Could not create .ssh folder for backup_user");
+
+		// Copy ssh private and public key
+		if(!copy("ssh/id_rsa", "/home/backup_user/.ssh/id_rsa"))
+			throw new Exception("Could not copy SSH private key");
+
+		if(!copy("ssh/id_rsa.pub", "/home/backup_user/.ssh/id_rsa.pub"))
+			throw new Exception("Could not copy SSH public key");
+	} else {
+		// The server is not a backup server
+
+		// Add .ssh folder
+		if(!mkdir("../.ssh"))
+			throw new Exception("Could not create .ssh folder");
+
+		// Copy ssh authorized_keys
+		if(!copy("ssh/authorized_keys", "../.ssh/authorized_keys"))
+			throw new Exception("Could not copy authorized_keys file");
+	}
 
 	// Restart apache server (password needed)
 	system("sudo apache2ctl restart", $ret);
