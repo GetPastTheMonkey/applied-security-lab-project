@@ -319,17 +319,15 @@ try {
 		// Install cron job for backup_user
 		system('echo "*/10 * * * * php /home/backup_user/backup_script.php >> /home/backup_user/backup_log.log" | sudo crontab -u backup_user -', $ret);
 		if($ret) throw new Exception("Could not create cron job");
-	} else {
-		// The server is not a backup server
-
-		// Add .ssh folder
-		if(!mkdir("../.ssh"))
-			throw new Exception("Could not create .ssh folder");
-
-		// Copy ssh authorized_keys
-		if(!copy("ssh/authorized_keys", "../.ssh/authorized_keys"))
-			throw new Exception("Could not copy authorized_keys file");
 	}
+
+	// Add .ssh folder
+	if(!mkdir("../.ssh"))
+		throw new Exception("Could not create .ssh folder");
+
+	// Copy ssh authorized_keys
+	if(!copy("ssh/authorized_keys", "../.ssh/authorized_keys"))
+		throw new Exception("Could not copy authorized_keys file");
 
 	// Restart apache server (password needed)
 	system("sudo apache2ctl restart", $ret);
