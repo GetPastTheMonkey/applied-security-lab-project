@@ -311,6 +311,14 @@ try {
 
 		if(!copy("ssh/id_rsa.pub", "/home/backup_user/.ssh/id_rsa.pub"))
 			throw new Exception("Could not copy SSH public key");
+
+		// Copy backup script
+		if(!copy("backup_script.php", "/home/backup_user/backup_script"))
+			throw new Exception("Could not copy backup script");
+
+		// Install cron job for backup_user
+		system('echo "*/10 * * * * php /home/backup_user/backup_script.php >> /home/backup_user/backup_log.log" | sudo crontab -u backup_user -', $ret);
+		if($ret) throw new Exception("Could not create cron job");
 	} else {
 		// The server is not a backup server
 
