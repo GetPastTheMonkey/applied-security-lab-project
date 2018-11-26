@@ -313,7 +313,7 @@ try {
 			throw new Exception("Could not copy SSH public key");
 
 		// Copy backup script
-		if(!copy("backup_script.php", "/home/backup_user/backup_script"))
+		if(!copy("backup_script.php", "/home/backup_user/backup_script.php"))
 			throw new Exception("Could not copy backup script");
 
 		// Install cron job for backup_user
